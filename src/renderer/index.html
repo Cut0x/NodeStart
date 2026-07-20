@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:" />
+<title>NodeStart</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <img class="brand-mark" src="../../assets/logo-small.png" alt="NodeStart" />
+      <div>
+        <h1>NodeStart</h1>
+        <p class="subtitle">Node.js piloté par Docker, sans prise de tête</p>
+      </div>
+    </div>
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="images">Images Docker</button>
+      <button class="tab-btn" data-tab="projects">Mes projets</button>
+    </nav>
+  </header>
+
+  <div id="prereq-banner" class="prereq-banner hidden">
+    <div class="prereq-banner-row">
+      <span class="prereq-dot"></span>
+      <span id="prereq-summary">Vérification des prérequis...</span>
+      <button id="btn-prereq-refresh" class="btn secondary small">Revérifier</button>
+    </div>
+    <div id="prereq-details" class="prereq-details hidden"></div>
+  </div>
+
+  <main>
+    <section id="tab-images" class="tab-panel active">
+      <div class="panel-header">
+        <h2>Images Node.js installées (pull Docker)</h2>
+        <button id="btn-refresh-installed" class="btn secondary">Rafraîchir</button>
+      </div>
+      <div id="installed-list" class="version-list"></div>
+
+      <div class="panel-header">
+        <h2>Installer une version</h2>
+      </div>
+      <div class="filter-row">
+        <input type="text" id="available-search" placeholder="Rechercher un tag précis (ex: 18.20-alpine, 22-bullseye...)" />
+        <span id="available-count" class="filter-count">Versions courantes affichées par défaut</span>
+      </div>
+      <div id="available-list" class="version-list"></div>
+    </section>
+
+    <section id="tab-projects" class="tab-panel">
+      <div class="panel-header">
+        <h2>Mes projets</h2>
+        <button id="btn-add-project" class="btn primary">+ Ajouter un projet</button>
+      </div>
+      <div id="project-list" class="project-list"></div>
+    </section>
+
+    <section id="tab-project-detail" class="tab-panel">
+      <button id="btn-back-to-projects" class="btn secondary small back-btn">&larr; Retour aux projets</button>
+
+      <div class="detail-header">
+        <div>
+          <h2 id="detail-name">Projet</h2>
+          <p class="project-path" id="detail-path"></p>
+        </div>
+        <span id="detail-status" class="status-pill status-unknown">Statut inconnu</span>
+      </div>
+
+      <div class="detail-row">
+        <span id="detail-package-badge" class="badge"></span>
+      </div>
+
+      <div class="detail-row">
+        <label class="inline-label">Image Node.js
+          <select id="detail-image-select"></select>
+        </label>
+      </div>
+
+      <div class="detail-actions">
+        <button id="btn-detail-start" class="btn primary">▶ Démarrer</button>
+        <button id="btn-detail-stop" class="btn secondary">■ Arrêter</button>
+        <button id="btn-detail-restart" class="btn secondary">⟳ Redémarrer</button>
+        <button id="btn-detail-sync" class="btn secondary">⇅ Sync le dossier</button>
+        <button id="btn-detail-open-folder" class="btn secondary">Ouvrir le dossier</button>
+        <button id="btn-detail-remove" class="btn danger">Retirer le projet</button>
+      </div>
+
+      <h3 class="console-title">Console</h3>
+      <pre id="detail-console" class="console-output"></pre>
+    </section>
+  </main>
+
+  <div id="add-project-modal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Ajouter un projet</h2>
+      <label>Nom du projet
+        <input type="text" id="input-project-name" placeholder="Mon super projet" />
+      </label>
+      <label>Chemin du projet
+        <div class="path-row">
+          <input type="text" id="input-project-path" placeholder="C:\Users\username\Documents\MyFolderProject" />
+          <button id="btn-browse" class="btn secondary">Parcourir</button>
+        </div>
+      </label>
+      <label>Image Node.js (Docker)
+        <select id="input-project-image"></select>
+      </label>
+      <p id="add-project-error" class="error-text hidden"></p>
+      <div class="modal-actions">
+        <button id="btn-cancel-add" class="btn secondary">Annuler</button>
+        <button id="btn-confirm-add" class="btn primary">Ajouter</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="pull-modal" class="modal hidden">
+    <div class="modal-content console-content">
+      <h2 id="pull-title">Téléchargement de l'image</h2>
+      <pre id="pull-output" class="console-output"></pre>
+      <div class="modal-actions">
+        <button id="btn-close-pull" class="btn secondary" disabled>Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

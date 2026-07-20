@@ -1,0 +1,51 @@
+{
+  "name": "nodestart",
+  "productName": "NodeStart",
+  "version": "2.0.0",
+  "description": "Gestionnaire de projets Node.js piloté par Docker, avec interface graphique.",
+  "main": "src/main/main.js",
+  "author": "",
+  "license": "ISC",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "dist": "electron-builder",
+    "dist:portable": "electron-builder --win portable",
+    "pack": "electron-builder --dir",
+    "generate-logo": "powershell -ExecutionPolicy Bypass -File build/generate-logo.ps1"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.nodestart.app",
+    "productName": "NodeStart",
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json",
+      "!**/*.map"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": ["nsis", "portable"],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "artifactName": "${productName}_Setup_v${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "${productName}_Portable_v${version}.${ext}"
+    }
+  }
+}
