@@ -116,12 +116,34 @@ function downloadFile(url, destPath, onProgress) {
   });
 }
 
-/** Lance une commande PowerShell élevée (déclenche une invite UAC) et attend sa fin. */
-function runElevated(psCommand) {
-  return new Promise((resolve) => {
-    const wrapper = `Start-Process -FilePath 'powershell.exe' -ArgumentList '-NoProfile','-NonInteractive','-Command','${psCommand.replace(/'/g, "''")}' -Verb RunAs -Wait`;
-    run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', wrapper]).then(resolve);
+function psQuote(value) {
+  return `'${String(value).replace(/'/g, "''")}'`;
+}
+
+/**
+ * Élève directement l'exécutable ciblé (déclenche une invite UAC) et attend sa fin, sans
+ * jamais afficher de fenêtre de console : la fenêtre visible qui restait ouverte sans retour
+ * venait d'un PowerShell élevé lancé sans -WindowStyle Hidden.
+ */
+function runElevated(filePath, args = []) {
+  const argumentList = args.length ? ` -ArgumentList ${args.map(psQuote).join(',')}` : '';
+  const script =
+    `$p = Start-Process -FilePath ${psQuote(filePath)}${argumentList} -Verb RunAs -WindowStyle Hidden -PassThru -Wait; ` +
+    `Write-Output ("NODESTART_EXIT=" + $p.ExitCode)`;
+
+  return run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script]).then((result) => {
+    const match = /NODESTART_EXIT=(-?\d+)/.exec(result.stdout);
+    return { code: match ? parseInt(match[1], 10) : result.code };
   });
+}
+
+/** Émet un signal de progression périodique pendant une opération élevée longue (aucun retour intermédiaire n'est possible sinon). */
+function withHeartbeat(onProgress, phase, promise) {
+  const startedAt = Date.now();
+  const timer = setInterval(() => {
+    onProgress && onProgress({ phase, elapsedSeconds: Math.round((Date.now() - startedAt) / 1000) });
+  }, 4000);
+  return promise.finally(() => clearInterval(timer));
 }
 
 // ---------- Prérequis (Docker Desktop / WSL2) ----------
@@ -154,8 +176,10 @@ async function checkPrerequisites() {
   return { docker, wsl };
 }
 
-async function installWsl() {
-  const result = await runElevated('wsl --install --no-launch');
+async function installWsl(onProgress) {
+  onProgress && onProgress({ phase: 'install', elapsedSeconds: 0 });
+  const result = await withHeartbeat(onProgress, 'install', runElevated('wsl.exe', ['--install', '--no-launch']));
+  onProgress && onProgress({ phase: 'done', ratio: 1 });
   return { code: result.code };
 }
 
@@ -166,9 +190,11 @@ async function installDockerDesktop(onProgress) {
   onProgress && onProgress({ phase: 'download', ratio: 0 });
   await downloadFile(installerUrl, installerPath, (ratio) => onProgress && onProgress({ phase: 'download', ratio }));
 
-  onProgress && onProgress({ phase: 'install', ratio: 0 });
-  const result = await runElevated(
-    `& '${installerPath}' install --quiet --accept-license --backend=wsl-2`
+  onProgress && onProgress({ phase: 'install', elapsedSeconds: 0 });
+  const result = await withHeartbeat(
+    onProgress,
+    'install',
+    runElevated(installerPath, ['install', '--quiet', '--accept-license', '--backend=wsl-2'])
   );
   onProgress && onProgress({ phase: 'done', ratio: 1 });
   return { code: result.code };

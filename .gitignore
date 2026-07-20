@@ -12,6 +12,9 @@ out/
 release/
 build/Release/
 
+# Page locale de téléchargement (pointe vers dist/, non versionnée)
+website/
+
 # Données locales de NodeStart (si générées dans le repo pendant le dev)
 projects.json
 
